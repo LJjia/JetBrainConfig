@@ -1,0 +1,2 @@
+# JetBrainConfig
+一些有关于jetbrain软件 比如clion和pycharm的配置文件
