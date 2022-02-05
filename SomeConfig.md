@@ -29,3 +29,91 @@
 # 汉化包
 
 可以从这个[github仓库](https://github.com/pingfangx/jetbrains-in-chinese)中找
+
+
+
+
+
+# 配置问题
+
+pycharm2018.3安装3.8的python解释器会出问题,关键看最后一句.这个问题已经被修复,修改方案可以看[这里](https://github.com/JetBrains/intellij-community/commit/07ef928f3b1fbc24401380110691342a558de242)
+
+```shell
+C:\anaconda3\envs\pytorch\python.exe "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\pydev\pydevconsole.py" --mode=client --port=53845
+C:\anaconda3\envs\pytorch\lib\site-packages\numpy\__init__.py:148: UserWarning: mkl-service package failed to import, therefore Intel(R) MKL initialization ensuring its correct out-of-the box operation under condition when Gnu OpenMP had already been loaded by Python process is not assured. Please install mkl-service package, see http://github.com/IntelPython/mkl-service
+  from . import _distributor_init
+Traceback (most recent call last):
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\pydev\pydevconsole.py", line 33, in <module>
+    from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\pydev\_pydev_bundle\pydev_console_utils.py", line 11, in <module>
+    from _pydevd_bundle import pydevd_thrift
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\pydev\_pydevd_bundle\pydevd_thrift.py", line 17, in <module>
+    from pydev_console.protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\pydev\pydev_console\protocol.py", line 6, in <module>
+    _console_thrift = _shaded_thriftpy.load(os.path.join(os.path.dirname(os.path.realpath(__file__)), "console.thrift"),
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\third_party\thriftpy\_shaded_thriftpy\parser\__init__.py", line 29, in load
+    thrift = parse(path, module_name, include_dirs=include_dirs,
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\third_party\thriftpy\_shaded_thriftpy\parser\parser.py", line 502, in parse
+    parser.parse(data)
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\third_party\thriftpy\_shaded_ply\yacc.py", line 331, in parse
+    return self.parseopt_notrack(input, lexer, debug, tracking, tokenfunc)
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\third_party\thriftpy\_shaded_ply\yacc.py", line 1106, in parseopt_notrack
+    p.callable(pslice)
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\third_party\thriftpy\_shaded_thriftpy\parser\parser.py", line 212, in p_struct
+    val = _fill_in_struct(p[1], p[3])
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\third_party\thriftpy\_shaded_thriftpy\parser\parser.py", line 765, in _fill_in_struct
+    gen_init(cls, thrift_spec, default_spec)
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\third_party\thriftpy\_shaded_thriftpy\thrift.py", line 103, in gen_init
+    cls.__init__ = init_func_generator(default_spec)
+  File "C:\software\Jetbrain\PyCharm 2018.3.7\helpers\third_party\thriftpy\_shaded_thriftpy\_compat.py", line 102, in init_func_generator
+    new_code = types.CodeType(len(varnames),
+TypeError: an integer is required (got type bytes)
+
+```
+
+修改方案就是替换最后报错的`C:\software\Jetbrain\PyCharm 2018.3.7\helpers\third_party\thriftpy\_shaded_thriftpy\_compat.py`这个文件的这部分
+
+```python
+    # 原始PY3部分
+    if PY3:
+        new_code = types.CodeType(len(varnames),
+                                  0,
+                                  len(varnames),
+                                  code.co_stacksize,
+                                  code.co_flags,
+                                  code.co_code,
+                                  code.co_consts,
+                                  code.co_names,
+                                  varnames,
+                                  code.co_filename,
+                                  "__init__",
+                                  code.co_firstlineno,
+                                  code.co_lnotab,
+                                  code.co_freevars,
+                                  code.co_cellvars)
+    # 替换为
+        if PY3:
+        args = [
+            len(varnames),
+            0,
+            len(varnames),
+            code.co_stacksize,
+            code.co_flags,
+            code.co_code,
+            code.co_consts,
+            code.co_names,
+            varnames,
+            code.co_filename,
+            "__init__",
+            code.co_firstlineno,
+            code.co_lnotab,
+            code.co_freevars,
+            code.co_cellvars
+        ]
+        if sys.version_info >= (3, 8, 0):
+            # Python 3.8 and above supports positional-only parameters. The number of such
+            # parameters is passed to the constructor as the second argument.
+            args.insert(2, 0)
+        new_code = types.CodeType(*args)
+```
+
